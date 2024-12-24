@@ -42,12 +42,25 @@ class AnalysisPlotter {
         const xValues = [];
         const yValues = [];
 
+        
+
         // Calculating x and y values for graphs
-        for (let x = 0; x <= data.beam.primarySpan; x += 0.1) {
-            let result = data.equation(x); // Using the equation function to get the y value
-            xValues.push(result.x);
-            yValues.push(result.y);
+        if (data.beam.secondarySpan > 0) {  // Ensure that secondary span exists (for two span unequal condition)
+            for (let x = 0; x <= (data.beam.primarySpan + data.beam.secondarySpan); x += 0.5) {
+                let result = data.equation(x);
+                xValues.push(result.x);
+                yValues.push(result.y);
+            }
+        } else {
+            // If only one span, the usual loop for simply supported
+            for (let x = 0; x <= data.beam.primarySpan; x += 0.5) {
+                let result = data.equation(x);
+                xValues.push(result.x);
+                yValues.push(result.y);
+            }
         }
+        
+      
 
         // Creating charts with Chart.js
         this.chart = new Chart(this.container, {
@@ -79,9 +92,10 @@ class AnalysisPlotter {
                     x: {
                         title: {
                             display: true,
-                            text: 'Span (m)' // Title for X-axis
-
+                            text: 'Span (m)'
                         },
+                        min: 0,
+                        max: data.beam.secondarySpan > 0 ? data.beam.primarySpan + data.beam.secondarySpan : data.beam.primarySpan  // Menentukan batas maksimum sumbu X sesuai L1 + L2
                     },
                     y: {
                         title: {

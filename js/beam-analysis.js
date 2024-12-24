@@ -221,6 +221,7 @@ BeamAnalysis.analyzer.twoSpanUnequal = class {
             } else {
                 V = 0;
             }
+            
             return { x: x, y: V }; // Placeholder, implement actual formula
         };
     }
