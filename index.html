@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Beam Analysis Plot</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <form>
@@ -52,9 +53,9 @@
             </tr>
         </table>
     </form>
-    <canvas id="deflection_plot"></canvas>
-    <canvas id="shear_force_plot"></canvas>
-    <canvas id="bending_moment_plot"></canvas>
+    <canvas id="deflection_plot" width="600px" height="300px" style="border: 1px solid black;"></canvas>
+    <canvas id="shear_force_plot" width="600px" height="300px" style="border: 1px solid black;"></canvas>
+    <canvas id="bending_moment_plot" width="600px" height="300px" style="border: 1px solid black;"></canvas>
 
     <script src="js/beam-analysis.js"></script>
     <script src="js/analysis-plotter.js"></script>
@@ -63,7 +64,7 @@
         /**
          * Get float value of specified field
          */
-        function floatVal(id) {
+         function floatVal(id) {
             return parseFloat(
                 document.getElementById(id).value
             );
@@ -92,6 +93,7 @@
             var deflectionData      = beamAnalysis.getDeflection(beam, floatVal('w'), stringVal('condition'));
             var bendingMomentData   = beamAnalysis.getBendingMoment(beam, floatVal('w'), stringVal('condition'));
             var shearForceData      = beamAnalysis.getShearForce(beam, floatVal('w'), stringVal('condition'));
+
 
             plotter.deflection.plot(deflectionData);
             plotter.shearForce.plot(shearForceData);
