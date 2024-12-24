@@ -95,7 +95,7 @@ class AnalysisPlotter {
                             text: 'Span (m)'
                         },
                         min: 0,
-                        max: data.beam.secondarySpan > 0 ? data.beam.primarySpan + data.beam.secondarySpan : data.beam.primarySpan  // Menentukan batas maksimum sumbu X sesuai L1 + L2
+                        max: data.beam.secondarySpan > 0 ? data.beam.primarySpan + data.beam.secondarySpan : data.beam.primarySpan  // Determining the maximum limit of the X-axis
                     },
                     y: {
                         title: {
