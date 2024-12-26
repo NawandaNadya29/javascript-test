@@ -59,8 +59,7 @@ class AnalysisPlotter {
                 yValues.push(result.y);
             }
         }
-        
-      
+              
 
         // Creating charts with Chart.js
         this.chart = new Chart(this.container, {

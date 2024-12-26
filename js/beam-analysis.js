@@ -92,7 +92,6 @@ class BeamAnalysis {
 
 
 
-
 /** ============================ Beam Analysis Analyzer ============================ */
 
 /**
