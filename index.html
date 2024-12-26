@@ -94,7 +94,6 @@
             var bendingMomentData   = beamAnalysis.getBendingMoment(beam, floatVal('w'), stringVal('condition'));
             var shearForceData      = beamAnalysis.getShearForce(beam, floatVal('w'), stringVal('condition'));
 
-
             plotter.deflection.plot(deflectionData);
             plotter.shearForce.plot(shearForceData);
             plotter.bendingMoment.plot(bendingMomentData);
