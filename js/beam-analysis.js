@@ -216,8 +216,6 @@ BeamAnalysis.analyzer.twoSpanUnequal = class {
     };
 }
 
-    
-
 
     getBendingMomentEquation(beam, load) {
         return function(x) {

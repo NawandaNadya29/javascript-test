@@ -36,13 +36,9 @@ class AnalysisPlotter {
     plot(data) {
         console.log('Plotting data: ', data);
 
-        
-
         // Creating data for graphs
         const xValues = [];
-        const yValues = [];
-
-        
+      
 
         // Calculating x and y values for graphs
         if (data.beam.secondarySpan > 0) {  // Ensure that secondary span exists (for two span unequal condition)
