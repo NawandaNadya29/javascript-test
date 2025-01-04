@@ -69,8 +69,8 @@ class AnalysisPlotter {
                 datasets: [{
                     label: null, // Does not display the label in the legend
                     data: yValues, // Y-axis value
-                    fill: true, // Filling the area under the chart
-                    backgroundColor: 'rgba(169, 169, 169, 0.3)', // Area color (gray with transparency)
+                    fill: (this.title === 'Deflection (mm)') ? false : true, // Only for deflection, don't fill the area
+                    backgroundColor: (this.title === 'Deflection (mm)') ? 'rgba(0, 0, 0, 0)' : 'rgba(169, 169, 169, 0.3)', // For deflection, no background color
                     borderColor: 'rgb(255, 0, 0)', // Red line color
                     borderWidth: 2, // Line width
                     tension: 0.0, // Set the line to be straight
@@ -111,4 +111,5 @@ class AnalysisPlotter {
             }
         });
     }
+    
 }

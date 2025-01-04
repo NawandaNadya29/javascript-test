@@ -27,7 +27,23 @@ class Beam {
         this.secondarySpan = secondarySpan;
         this.material = material;
     }
+
+    calculateReactions(w, L1, L2) {
+        const M1 = -(w * L1 ** 3 + w * L2 ** 3) / (8 * (L1 + L2));
+        const R1 = M1 / L1 + (w * L1) / 2;
+        const R3 = M1 / L2 + (w * L2) / 2;
+        const R2 = w * (L1 + L2) - R1 - R3;
+
+        return {
+            M1: M1,
+            R1: R1,
+            R2: R2,
+            R3: R3
+        };
+    }
 }
+
+
 
 /** ============================ Beam Analysis Class ============================ */
 
@@ -112,15 +128,22 @@ BeamAnalysis.analyzer.simplySupported = class {
     }
 
     getDeflectionEquation(beam, load) {
-        const j2 = floatVal("j2");  // Get the j2 value from the input
-        return function(x) {
-            const L = beam.primarySpan;
-            const EI = beam.material.properties.EI;
-            const w = load;
-            const delta = (w * x * x * (3 * L - x)) / (6 * EI);  // Deflection formula
-            return { x: x, y: delta * 1000 * j2 };  // Convert to mm and multiply by j2
+        return function (x) {
+          const L = beam.primarySpan;
+          const EI = beam.material.properties.EI/ 1e8;
+          const w = load;
+    
+          // Updated deflection formula
+          const delta =
+            -((w * x) / (24 * EI)) *
+            (Math.pow(L, 3) - 2 * L * Math.pow(x, 2) + Math.pow(x, 3)) *
+            1000; // Convert to mm
+ 
+          return { x: x, y: delta };
         };
-    }
+      }    
+    
+       
 
     getBendingMomentEquation(beam, load) {
         return function(x) {
@@ -156,72 +179,130 @@ BeamAnalysis.analyzer.twoSpanUnequal = class {
         this.beam = beam;
         this.load = load;
     }
-
+    
 
     getDeflectionEquation(beam, load) {
-        return function(x) {
-            const EI = beam.material.properties.EI / 1e9; // Convert EI to kN-m^2
-            const w = load;
-            const L1 = beam.primarySpan;
-            const L2 = beam.secondarySpan;
-            const R1 = (w * L2 * (3 * L1 + L2)) / (8 * (L1 + L2)); // Reaction at support 1
-            const R2 = (w * L1 * (3 * L2 + L1)) / (8 * (L1 + L2)); // Reaction at support 2
+    return function(x) {
+        const j2 = floatVal("j2");
+        const L1 = beam.primarySpan; 
+        const L2 = beam.secondarySpan; 
+        const w = load; 
+        const EI = beam.material.properties.EI / 1e7;
 
-            let delta;
+        const R1 = (w * L1 * (3 * L2 + 2 * L1)) / (2 * (L1 + L2));
+        const R2 = w * (L1 + L2) - R1;
 
+        let delta;
+
+        // Condition L1 == L2
+        if (L1 === L2) {
             if (x <= L1) {
-                delta = ((R1 * Math.pow(x, 3)) / 6 - (w * Math.pow(x, 4)) / 24 + w * Math.pow(L1, 3) * x / 6) / EI; // Span 1
+                delta = ((w * x ** 2) / (24 * EI)) * (6 * L1 ** 2 - 4 * L1 * x + x ** 2) - (R1 * x ** 3) / (6 * EI);
             } else if (x <= L1 + L2) {
-                const xRel = x - L1;
-                delta = ((R2 * Math.pow(xRel, 3)) / 6 - (w * Math.pow(xRel, 4)) / 24 + w * Math.pow(L2, 3) * xRel / 6) / EI; // Span 2
-            } else {
-                delta = 0;
+                const x2 = x - L1;
+                delta = (w * L1 ** 3) / (6 * EI) - (R1 * L1 ** 2) / (2 * EI) + (R2 * x2 ** 3) / (6 * EI) - (w * x2 ** 4) / (24 * EI);
             }
+        } else {
+            // Condition L1!=L2
+            if (x <= L1) {
+                delta = ((w * x ** 2) / (24 * EI)) * (6 * L1 ** 2 - 4 * L1 * x + x ** 2) - (R1 * x ** 3) / (6 * EI);
+            } else if (x <= L1 + L2) {
+                const x2 = x - L1;
+                delta = (w * L1 ** 3) / (6 * EI) - (R1 * L1 ** 2) / (2 * EI) + (R2 * x2 ** 3) / (6 * EI) - (w * x2 ** 4) / (24 * EI);
+            }
+        }
 
-            return { x: x, y: delta * 1000 };
-        };
-    }
+        return { x: x, y: delta * 1000 * j2 };
+    };
+}
+
+    
+
 
     getBendingMomentEquation(beam, load) {
-        return function (x) {
+        return function(x) {
             const L1 = beam.primarySpan;
             const L2 = beam.secondarySpan;
             const w = load;
-            const R1 = (w * L2 * (3 * L1 + L2)) / (8 * (L1 + L2));
-
-            let M;
-
-            if (x <= L1) {
-                M = R1 * x - (w * Math.pow(x, 2)) / 2; // Span 1
-            } else if (x <= L1 + L2) {
-                const xRel = x - L1;
-                M = R1 * L1 - (w * Math.pow(xRel, 2)) / 2; // Span 2
-            } else {
-                M = 0;
+            const reactions = beam.calculateReactions(load, L1, L2);
+            const R1 = reactions.R1;
+            const R2 = reactions.R2;
+    
+            // Handles the condition when L1 == L2
+            if (L1 === L2) {
+                // Specific calculation model for L1 == L2
+                if (x > L1 + L2) return { x, y: 0 };  // If x exceeds the total length
+    
+                let M = 0;
+    
+                // Bending moment at first span (0 to L1)
+                if (x <= L1) {
+                    M = R1 * x - (w * x ** 2) / 2;
+                }
+                // Bending moment at second span (L1 to L1+L2)
+                else {
+                    M = R1 * x + R2 * (x - L1) - (w * x ** 2) / 2;
+                }
+    
+                return { x: x, y: M };
             }
-            return { x: x, y: M }; // Placeholder, implement actual formula
-        };
-    }
-
-    getShearForceEquation(beam, load) {
-        return function (x) {
-            const L1 = beam.primarySpan;
-            const L2 = beam.secondarySpan;
-            const w = load;
-            const R1 = (w * L2 * (3 * L1 + L2)) / (8 * (L1 + L2));
-
-            let V;
-
-            if (x <= L1) {
-                V = R1 - w * x; // Span 1
-            } else if (x <= L1 + L2) {
-                const xRel = x - L1;
-                V = R1 - w * xRel; // Span 2
-            } else {
-                V = 0;
-            }
+    
+            // Handle common conditions (L1!=L2)
+            if (x > L1 + L2) return { x, y: 0 };  // Beyond total length
             
-            return { x: x, y: V }; // Placeholder, implement actual formula
+            let M = 0;
+            
+            // Bending moment at first span (0 to L1)
+            if (x <= L1) {
+                M = R1 * x - (w * x ** 2) / 2;
+            }
+            // Bending moment at second span (L1 to L1+L2)
+            else {
+                M = R1 * x + R2 * (x - L1) - (w * x ** 2) / 2;
+            }
+    
+            return { x: x, y: M };
         };
     }
+    
+    getShearForceEquation(beam, load) {
+        return function(x) {
+            const L1 = beam.primarySpan;
+            const L2 = beam.secondarySpan;
+            const w = load;
+            const reactions = beam.calculateReactions(w, L1, L2);
+            const R1 = reactions.R1;
+            const R2 = reactions.R2;
+            const R3 = reactions.R3;
+    
+            let V;
+    
+            // Handles the condition when L1 == L2
+            if (L1 === L2) {
+                if (x > L1 + L2) return { x, y: 0 };  // If x exceeds the total length
+                if (x <= L1) {
+                    V = R1 - (w * x);  // Shear force between 0 and L1
+                } else {
+                    V = R1 + R2 - (w * x);  // Shear force between L1 to L1+L2
+                }
+                return { x: x, y: V };  // Restoring shear force
+            }
+    
+            // Handle common conditions (L1!=L2)
+            if (x === 0) {
+                V = R1;  // Shear force at the start
+            } else if (x < L1) {
+                V = R1 - (w * x);  // Between 0 and L1
+            } else if (x === L1) {
+                V = R1 - w * L1;  // At the end of the first span
+            } else if (x < L1 + L2) {
+                V = R1 + R2 - (w * x);  // Between L1 and L1+L2
+            } else if (x === L1 + L2) {
+                V = R1 + R2 - (w * (L1 + L2));  // At the end of the second span
+            }
+    
+            return { x: x, y: V };  // Returning shear force value
+        };
+    }
+    
 };
