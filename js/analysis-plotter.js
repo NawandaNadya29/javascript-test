@@ -38,6 +38,7 @@ class AnalysisPlotter {
 
         // Creating data for graphs
         const xValues = [];
+        const yValues = [];
       
 
         // Calculating x and y values for graphs

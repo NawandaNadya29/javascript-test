@@ -180,42 +180,59 @@ BeamAnalysis.analyzer.twoSpanUnequal = class {
         this.load = load;
     }
     
-
     getDeflectionEquation(beam, load) {
-    return function(x) {
-        const j2 = floatVal("j2");
-        const L1 = beam.primarySpan; 
-        const L2 = beam.secondarySpan; 
-        const w = load; 
-        const EI = beam.material.properties.EI / 1e7;
-
-        const R1 = (w * L1 * (3 * L2 + 2 * L1)) / (2 * (L1 + L2));
-        const R2 = w * (L1 + L2) - R1;
-
-        let delta;
-
-        // Condition L1 == L2
-        if (L1 === L2) {
-            if (x <= L1) {
-                delta = ((w * x ** 2) / (24 * EI)) * (6 * L1 ** 2 - 4 * L1 * x + x ** 2) - (R1 * x ** 3) / (6 * EI);
-            } else if (x <= L1 + L2) {
-                const x2 = x - L1;
-                delta = (w * L1 ** 3) / (6 * EI) - (R1 * L1 ** 2) / (2 * EI) + (R2 * x2 ** 3) / (6 * EI) - (w * x2 ** 4) / (24 * EI);
+        return function (x) {
+          const j2 = floatVal("j2");
+          const L1 = beam.primarySpan;
+          const L2 = beam.secondarySpan;
+          const w = load;
+          const EI = beam.material.properties.EI / 1e7;
+    
+          // Calculate reactions at supports (R1 and R2)
+          const R1 = (w * L1 * (3 * L2 + 2 * L1)) / (2 * (L1 + L2));
+          const R2 = w * (L1 + L2) - R1;
+    
+          let delta;
+    
+          if (L1 === L2) {
+            // Case when L1 == L2
+            if (x >= 0 && x <= L1) {
+              // Deflection in first span
+              delta =
+                ((w * x ** 2) / (24 * EI)) * (6 * L1 ** 2 - 4 * L1 * x + x ** 2) -
+                (R1 * x ** 3) / (6 * EI);
+            } else if (x > L1 && x <= L1 + L2) {
+              // Deflection in second span (symmetrical for L1 = L2)
+              const x2 = x - L1;
+              delta =
+                (w * L1 ** 3) / (6 * EI) -
+                (R1 * L1 ** 2) / (2 * EI) +
+                (R2 * x2 ** 3) / (6 * EI) -
+                (w * x2 ** 4) / (24 * EI);
             }
-        } else {
-            // Condition L1!=L2
-            if (x <= L1) {
-                delta = ((w * x ** 2) / (24 * EI)) * (6 * L1 ** 2 - 4 * L1 * x + x ** 2) - (R1 * x ** 3) / (6 * EI);
-            } else if (x <= L1 + L2) {
-                const x2 = x - L1;
-                delta = (w * L1 ** 3) / (6 * EI) - (R1 * L1 ** 2) / (2 * EI) + (R2 * x2 ** 3) / (6 * EI) - (w * x2 ** 4) / (24 * EI);
+          } else {
+            // Case when L1 != L2
+            if (x >= 0 && x <= L1) {
+              // First span (0 <= x <= L1)
+              delta =
+                ((w * x ** 2) / (24 * EI)) * (6 * L1 ** 2 - 4 * L1 * x + x ** 2) -
+                (R1 * x ** 3) / (6 * EI);
+            } else if (x > L1 && x <= L1 + L2) {
+              // Second span (L1 < x <= L1 + L2)
+              const x2 = x - L1;
+              delta =
+                (w * L1 ** 3) / (6 * EI) -
+                (R1 * L1 ** 2) / (2 * EI) +
+                (R2 * x2 ** 3) / (6 * EI) -
+                (w * x2 ** 4) / (24 * EI);
             }
-        }
-
-        return { x: x, y: delta * 1000 * j2 };
-    };
-}
-
+          }
+    
+          // Return deflection, apply j2 factor and convert to mm (multiply by 1000)
+          return { x: x, y: delta * 1000 * j2 };
+        };
+      }
+    
 
     getBendingMomentEquation(beam, load) {
         return function(x) {
